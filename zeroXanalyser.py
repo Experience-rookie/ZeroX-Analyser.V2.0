@@ -34,6 +34,11 @@ if __name__ == "__main__":
 
     # Check if a directory has been specified and proceed with the analysis.
     if results.dir is not None:
+        # Check if the provided directory exists
+        if not os.path.exists(results.dir):
+            print(f"\033[91m[!] Error!! Invalid directory path: {results.dir}\033[0m")
+            sys.exit(1)
+
         """Check if a directory has been specified and proceed with the analysis.
           To browse files recursively, higher threshold"""
         sys.setrecursionlimit(1000000)
@@ -50,6 +55,30 @@ if __name__ == "__main__":
         print(ascii_art)
         print("\n{}Analyzing '{}' source code{}".format('' if results.plain else '\033[1m', results.dir, '' if results.plain else '\033[0m'))
         time.sleep(5)
+
+        # Check if directory is empty
+        if os.path.isdir(results.dir) and not any(os.scandir(results.dir)):
+            print(f"\n\033[91m[!] The directory '{results.dir}' is empty. Cannot proceed with the scan.\033[0m")
+            sys.exit(1)
+
+        # Check if directory (or file) contains at least one PHP file
+        has_php = False
+        if os.path.isfile(results.dir) and results.dir.endswith('.php'):
+            has_php = True
+        elif os.path.isdir(results.dir):
+            for root, dirs, files in os.walk(results.dir):
+                for file in files:
+                    if file.endswith('.php'):
+                        has_php = True
+                        break
+                if has_php:
+                    break
+
+        if not has_php:
+            print(f"\n\033[91m[!] No PHP files found in the specified path. Skipping scan.\033[0m")
+            sys.exit(1)
+
+        # Proceed with scanning
         if os.path.isfile(results.dir):
             analysis(results.dir, results.plain)
         else:
